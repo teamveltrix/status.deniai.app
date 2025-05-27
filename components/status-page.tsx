@@ -224,12 +224,12 @@ export function StatusPage() {
                   )}
                   <AlertDescription>
                     <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold break-words">
                             {maintenanceItem.title}
                           </h3>
-                          <div className="flex items-center space-x-2 mt-1">
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge
                               variant="secondary"
                               className={`${getStatusColor(
@@ -247,8 +247,8 @@ export function StatusPage() {
                               {getImpactText(maintenanceItem.impact)}
                             </Badge>
                           </div>
-                        </div>{" "}
-                        <div className="text-right text-sm text-muted-foreground whitespace-nowrap">
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground sm:whitespace-nowrap sm:ml-4 flex-shrink-0">
                           <div className="font-medium">
                             {formatMaintenanceTime(
                               maintenanceItem.scheduledStartTime,
@@ -278,19 +278,21 @@ export function StatusPage() {
                       )}
 
                       {maintenanceItem.latestUpdate && (
-                        <div className="text-sm border-l-2 border-muted pl-3 mt-2">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="w-3 h-3" />
-                            <span className="font-medium">
-                              {maintenanceItem.latestUpdate.title}
-                            </span>
-                            <span className="text-muted-foreground">
+                        <div className="text-sm border-l-2 border-muted pl-3 mt-2 w-full">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="w-3 h-3" />
+                              <span className="font-medium break-words">
+                                {maintenanceItem.latestUpdate.title}
+                              </span>
+                            </div>
+                            <span className="text-muted-foreground text-xs sm:text-sm">
                               {formatRelativeTime(
                                 maintenanceItem.latestUpdate.createdAt
                               )}
                             </span>
                           </div>
-                          <p className="mt-1 text-muted-foreground">
+                          <p className="mt-1 text-muted-foreground whitespace-pre-wrap break-words">
                             {maintenanceItem.latestUpdate.description}
                           </p>
                         </div>

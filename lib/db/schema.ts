@@ -105,6 +105,17 @@ export const maintenanceServices = pgTable('maintenance_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Settings table
+export const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 255 }).notNull().unique(),
+  value: text('value').notNull(),
+  type: varchar('type', { length: 50 }).notNull().default('string'), // string, number, boolean, json
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const incidentsRelations = relations(incidents, ({ many }) => ({
   updates: many(incidentUpdates),
@@ -193,3 +204,6 @@ export type NewMaintenanceUpdate = typeof maintenanceUpdates.$inferInsert;
 
 export type MaintenanceService = typeof maintenanceServices.$inferSelect;
 export type NewMaintenanceService = typeof maintenanceServices.$inferInsert;
+
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;

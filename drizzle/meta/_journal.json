@@ -15,6 +15,13 @@
       "when": 1748263501972,
       "tag": "0001_flimsy_sharon_carter",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748336690798,
+      "tag": "0002_real_silver_centurion",
+      "breakpoints": true
     }
   ]
 }
