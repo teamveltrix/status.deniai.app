@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Status Page",
-  description: "Service status and incident updates",
+  title: "Veltrix Status",
+  description: "Veltrix service status and incident updates",
 };
 
 export default function RootLayout({

@@ -165,7 +165,7 @@ export function StatusPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">System Status</h1>
+          <h1 className="text-3xl font-bold mb-2">Veltrix Status</h1>
           <p className="text-muted-foreground">
             Current status of all our services
           </p>
@@ -399,7 +399,7 @@ export function StatusPage() {
                     <AlertTriangle className="h-4 w-4" />
                   )}
                   <AlertDescription>
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full">
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-semibold">{incident.title}</h3>
