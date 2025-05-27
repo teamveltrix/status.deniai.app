@@ -1,6 +1,6 @@
 name: build-and-deploy
 run-name: Build & Deploy to Workers
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
