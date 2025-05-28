@@ -79,7 +79,8 @@ interface ScheduledMaintenance {
 
 export function StatusPage() {
   const [services, setServices] = useState<Service[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [activeIncidents, setActiveIncidents] = useState<Incident[]>([]);
+  const [recentIncidents, setRecentIncidents] = useState<Incident[]>([]);
   const [maintenance, setMaintenance] = useState<ScheduledMaintenance[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -96,16 +97,16 @@ export function StatusPage() {
         }
         if (incidentsRes.ok) {
           const incidentsData: Incident[] = await incidentsRes.json();
-          // Show recent incidents (active first, then recently resolved)
+          // Separate active and recent resolved incidents
           const activeIncidents = incidentsData.filter(
             (i) => i.status !== "resolved"
           );
           const recentResolvedIncidents = incidentsData
             .filter((i) => i.status === "resolved")
             .slice(0, 3); // Show last 3 resolved incidents
-          setIncidents(
-            [...activeIncidents, ...recentResolvedIncidents].slice(0, 5)
-          );
+
+          setActiveIncidents(activeIncidents);
+          setRecentIncidents(recentResolvedIncidents);
         }
         if (maintenanceRes.ok) {
           const maintenanceData: ScheduledMaintenance[] =
@@ -189,7 +190,98 @@ export function StatusPage() {
             </div>
           </CardContent>
         </Card>{" "}
+        {/* Active Incidents */}
+        {activeIncidents.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">
+                Active Incidents
+              </h2>
+              <a
+                href="/incidents"
+                className="text-sm text-primary hover:underline flex items-center"
+              >
+                View All Incidents
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            </div>
+            <div className="space-y-4">
+              {activeIncidents.map((incident) => (
+                <Alert
+                  key={incident.id}
+                  className="border-l-4 border-l-red-500"
+                >
+                  <AlertTriangle className="h-4 w-4 stroke-red-500 dark:stroke-red-300" />
+                  <AlertDescription>
+                    <div className="space-y-2 w-full">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {incident.title}
+                          </h3>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge
+                              variant="secondary"
+                              className={`${getStatusColor(
+                                incident.status
+                              )} text-white`}
+                            >
+                              {getStatusText(incident.status)}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={`${getImpactColor(
+                                incident.impact
+                              )} text-white`}
+                            >
+                              {getImpactText(incident.impact)}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground whitespace-nowrap">
+                          <div>{formatRelativeTime(incident.createdAt)}</div>
+                        </div>
+                      </div>
 
+                      {incident.services.length > 0 && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">
+                            Affected services:{" "}
+                          </span>
+                          {incident.services.map((service, index) => (
+                            <span key={service.id}>
+                              {service.name}
+                              {index < incident.services.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {incident.latestUpdate && (
+                        <div className="text-sm border-l-2 border-muted pl-3 mt-2">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-3 h-3" />
+                            <span className="font-medium">
+                              {incident.latestUpdate.title}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {formatRelativeTime(
+                                incident.latestUpdate.createdAt
+                              )}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-muted-foreground">
+                            {incident.latestUpdate.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Scheduled Maintenance */}
         {maintenance.length > 0 && (
           <div className="mb-8">
@@ -226,7 +318,7 @@ export function StatusPage() {
                     <div className="space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold break-words">
+                          <h3 className="font-semibold break-words text-foreground">
                             {maintenanceItem.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -304,7 +396,6 @@ export function StatusPage() {
             </div>
           </div>
         )}
-        
         {/* Services Status */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Services</h2>
@@ -369,12 +460,13 @@ export function StatusPage() {
             </CardContent>
           </Card>{" "}
         </div>{" "}
-        
-        {/* Recent Incidents */}
-        {incidents.length > 0 && (
+        {/* Recent Resolved Incidents */}
+        {recentIncidents.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Recent Incidents</h2>
+              <h2 className="text-xl font-semibold">
+                Recent Resolved Incidents
+              </h2>
               <a
                 href="/incidents"
                 className="text-sm text-primary hover:underline flex items-center"
@@ -382,9 +474,9 @@ export function StatusPage() {
                 View All Incidents
                 <ExternalLink className="w-3 h-3 ml-1" />
               </a>
-            </div>{" "}
+            </div>
             <div className="space-y-4">
-              {incidents.map((incident) => (
+              {recentIncidents.map((incident) => (
                 <Alert
                   key={incident.id}
                   className={`border-l-4 ${
@@ -402,7 +494,7 @@ export function StatusPage() {
                     <div className="space-y-2 w-full">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold">{incident.title}</h3>
+                          <h3 className="font-semibold text-foreground">{incident.title}</h3>
                           <div className="flex items-center space-x-2 mt-1">
                             <Badge
                               variant="secondary"
@@ -420,11 +512,6 @@ export function StatusPage() {
                             >
                               {getImpactText(incident.impact)}
                             </Badge>
-                            {/* {incident.status === 'resolved' && (
-                              <Badge variant="default" className="bg-green-500 text-white">
-                                Resolved
-                              </Badge>
-                            )} */}
                           </div>
                         </div>
                         <div className="text-right text-sm text-muted-foreground whitespace-nowrap">
