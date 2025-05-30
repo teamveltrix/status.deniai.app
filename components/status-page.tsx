@@ -107,15 +107,18 @@ export function StatusPage() {
 
           setActiveIncidents(activeIncidents);
           setRecentIncidents(recentResolvedIncidents);
-        }
-        if (maintenanceRes.ok) {
+        }        if (maintenanceRes.ok) {
           const maintenanceData: ScheduledMaintenance[] =
             await maintenanceRes.json();
+          console.log("取得したメンテナンスデータ:", maintenanceData);
           // Show upcoming and in-progress maintenance
           const upcomingMaintenance = maintenanceData.filter(
             (m) => m.status === "scheduled" || m.status === "in_progress"
           );
+          console.log("フィルタ後のメンテナンス:", upcomingMaintenance);
           setMaintenance(upcomingMaintenance.slice(0, 3));
+        } else {
+          console.error("メンテナンスAPI呼び出し失敗:", maintenanceRes.status);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
