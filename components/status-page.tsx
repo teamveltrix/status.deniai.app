@@ -89,7 +89,7 @@ export function StatusPage() {
         const [servicesRes, incidentsRes, maintenanceRes] = await Promise.all([
           fetch("/api/services"),
           fetch("/api/incidents"),
-          fetch("/api/maintenance?upcoming=true"),
+          fetch("/api/maintenance"),
         ]);
         if (servicesRes.ok) {
           const servicesData: Service[] = await servicesRes.json();
