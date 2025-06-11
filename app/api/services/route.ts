@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDb, services, type NewService } from '@/lib/db';
+import { createDb, services, components, type NewService } from '@/lib/db';
 import { verifyAuth } from '@/lib/auth-middleware';
 import { z } from 'zod';
+import { eq, asc } from 'drizzle-orm';
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -15,8 +16,30 @@ const serviceSchema = z.object({
 export async function GET() {
   try {
     const db = createDb();
-    const allServices = await db.select().from(services).orderBy(services.order);
-    return NextResponse.json(allServices);
+    
+    // Get all services with their components
+    const allServices = await db
+      .select()
+      .from(services)
+      .orderBy(services.order, services.name);
+
+    // Get components for each service
+    const servicesWithComponents = await Promise.all(
+      allServices.map(async (service) => {
+        const serviceComponents = await db
+          .select()
+          .from(components)
+          .where(eq(components.serviceId, service.id))
+          .orderBy(asc(components.order), asc(components.name));
+
+        return {
+          ...service,
+          components: serviceComponents.filter(c => c.isVisible),
+        };
+      })
+    );
+
+    return NextResponse.json(servicesWithComponents);
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });

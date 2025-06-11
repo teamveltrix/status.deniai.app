@@ -16,6 +16,18 @@ import {
 } from "@/lib/utils";
 import { AlertTriangle, CheckCircle, Clock, ExternalLink } from "lucide-react";
 
+interface Component {
+  id: number;
+  serviceId: number;
+  name: string;
+  description: string | null;
+  status: "operational" | "degraded" | "partial_outage" | "major_outage";
+  order: number;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Service {
   id: number;
   name: string;
@@ -26,6 +38,7 @@ interface Service {
   isVisible: boolean;
   createdAt: string;
   updatedAt: string;
+  components?: Component[];
 }
 
 interface IncidentUpdate {
@@ -129,15 +142,26 @@ export function StatusPage() {
 
     fetchData();
   }, []);
-
   const getOverallStatus = () => {
     if (services.length === 0)
       return { status: "operational", text: "All Systems Operational" };
 
-    const hasOutages = services.some(
-      (s) => s.status === "major_outage" || s.status === "partial_outage"
+    // Collect all statuses from services and their components
+    const allStatuses: string[] = [];
+    
+    services.forEach(service => {
+      allStatuses.push(service.status);
+      if (service.components) {
+        service.components.forEach(component => {
+          allStatuses.push(component.status);
+        });
+      }
+    });
+
+    const hasOutages = allStatuses.some(
+      (status) => status === "major_outage" || status === "partial_outage"
     );
-    const hasDegraded = services.some((s) => s.status === "degraded");
+    const hasDegraded = allStatuses.some((status) => status === "degraded");
 
     if (hasOutages) {
       return {
@@ -408,54 +432,91 @@ export function StatusPage() {
                 <div className="p-6 text-center text-muted-foreground">
                   No services configured
                 </div>
-              ) : (
-                <div className="divide-y">
+              ) : (                <div className="divide-y">
                   {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="p-4 flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={`w-3 h-3 rounded-full ${getStatusColor(
-                            service.status
-                          )}`}
-                        ></div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-medium">{service.name}</h3>
-                            {service.url && (
-                              <a
-                                href={service.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-muted-foreground hover:text-primary"
-                              >
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
+                    <div key={service.id} className="space-y-0">
+                      {/* Service Row */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className={`w-3 h-3 rounded-full ${getStatusColor(
+                              service.status
+                            )}`}
+                          ></div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-medium">{service.name}</h3>
+                              {service.url && (
+                                <a
+                                  href={service.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+                            {service.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {service.description}
+                              </p>
                             )}
                           </div>
-                          {service.description && (
-                            <p className="text-sm text-muted-foreground">
-                              {service.description}
-                            </p>
-                          )}
                         </div>
+                        <Badge
+                          variant={
+                            service.status === "operational"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            service.status === "operational"
+                              ? "bg-green-500 text-white"
+                              : `${getStatusColor(service.status)} text-white`
+                          }
+                        >
+                          {getStatusText(service.status)}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant={
-                          service.status === "operational"
-                            ? "default"
-                            : "secondary"
-                        }
-                        className={
-                          service.status === "operational"
-                            ? "bg-green-500 text-white"
-                            : `${getStatusColor(service.status)} text-white`
-                        }
-                      >
-                        {getStatusText(service.status)}
-                      </Badge>
+                      
+                      {/* Components */}
+                      {service.components && service.components.length > 0 && (
+                        <div className="pl-10 pb-2 space-y-2">
+                          {service.components.map((component) => (
+                            <div
+                              key={component.id}
+                              className="flex items-center justify-between py-2 px-4 bg-muted/30 rounded-md"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div
+                                  className={`w-2 h-2 rounded-full ${getStatusColor(
+                                    component.status
+                                  )}`}
+                                ></div>
+                                <div>
+                                  <h4 className="text-sm font-medium">{component.name}</h4>
+                                  {component.description && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {component.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  component.status === "operational"
+                                    ? "border-green-500 text-green-700 bg-green-50"
+                                    : `${getStatusColor(component.status)} text-white`
+                                }`}
+                              >
+                                {getStatusText(component.status)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

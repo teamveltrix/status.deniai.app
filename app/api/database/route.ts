@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDb, services, incidents, incidentUpdates, scheduledMaintenance, maintenanceUpdates, settings } from '@/lib/db';
+import { createDb, services, incidents, incidentUpdates, scheduledMaintenance, maintenanceUpdates, settings, components } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 const db = createDb();
@@ -9,11 +9,11 @@ export async function GET() {
   try {
     // Check database connection by running a simple query
     await db.select().from(settings).limit(1);
-    
-    // Get basic statistics
+      // Get basic statistics
     const [servicesCount] = await db.select({ count: services.id }).from(services);
     const [incidentsCount] = await db.select({ count: incidents.id }).from(incidents);
     const [maintenanceCount] = await db.select({ count: scheduledMaintenance.id }).from(scheduledMaintenance);
+    const [componentsCount] = await db.select({ count: components.id }).from(components);
     
     return NextResponse.json({
       status: 'connected',
@@ -22,6 +22,7 @@ export async function GET() {
         services: servicesCount?.count || 0,
         incidents: incidentsCount?.count || 0,
         maintenance: maintenanceCount?.count || 0,
+        components: componentsCount?.count || 0,
       }
     });
   } catch (error) {
@@ -65,14 +66,14 @@ export async function POST(request: NextRequest) {
 }
 
 async function exportData() {
-  try {
-    const [
+  try {    const [
       allServices,
       allIncidents,
       allIncidentUpdates,
       allMaintenance,
       allMaintenanceUpdates,
       allSettings,
+      allComponents,
     ] = await Promise.all([
       db.select().from(services),
       db.select().from(incidents),
@@ -80,6 +81,7 @@ async function exportData() {
       db.select().from(scheduledMaintenance),
       db.select().from(maintenanceUpdates),
       db.select().from(settings),
+      db.select().from(components),
     ]);
 
     const exportData = {
@@ -92,6 +94,7 @@ async function exportData() {
         maintenance: allMaintenance,
         maintenanceUpdates: allMaintenanceUpdates,
         settings: allSettings,
+        components: allComponents,
       }
     };
 
@@ -173,15 +176,24 @@ async function importData(importData: any) {
           console.log('Maintenance already exists, skipping:', maintenance.title);
         }
       }
-    }
-
-    if (data.maintenanceUpdates) {
+    }    if (data.maintenanceUpdates) {
       for (const update of data.maintenanceUpdates) {
         try {
           await db.insert(maintenanceUpdates).values(update);
         } catch (error) {
           // Skip if already exists
           console.log('Maintenance update already exists, skipping');
+        }
+      }
+    }
+
+    if (data.components) {
+      for (const component of data.components) {
+        try {
+          await db.insert(components).values(component);
+        } catch (error) {
+          // Skip if already exists
+          console.log('Component already exists, skipping:', component.name);
         }
       }
     }
@@ -201,6 +213,7 @@ async function resetAllData() {
     // Delete all data in the correct order to maintain referential integrity
     await db.delete(incidentUpdates);
     await db.delete(maintenanceUpdates);
+    await db.delete(components);
     await db.delete(incidents);
     await db.delete(scheduledMaintenance);
     await db.delete(services);

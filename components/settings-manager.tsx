@@ -43,6 +43,7 @@ interface DatabaseStatus {
     services: number;
     incidents: number;
     maintenance: number;
+    components: number;
   };
 }
 
@@ -388,11 +389,10 @@ export function SettingsManager() {
                     : dbStatus.status === "checking"
                     ? "Loading"
                     : "Disconnected"}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
+                </Badge>                <span className="text-sm text-muted-foreground">
                   {dbStatus.database || "Database"}
                   {dbStatus.statistics &&
-                    ` - ${dbStatus.statistics.services} services, ${dbStatus.statistics.incidents} incidents`}
+                    ` - ${dbStatus.statistics.services} services, ${dbStatus.statistics.incidents} incidents, ${dbStatus.statistics.components} components`}
                 </span>
               </div>
             </div>

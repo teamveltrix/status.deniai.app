@@ -105,6 +105,19 @@ export const maintenanceServices = pgTable('maintenance_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Components table
+export const components = pgTable('components', {
+  id: serial('id').primaryKey(),
+  serviceId: integer('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  status: serviceStatusEnum('status').notNull().default('operational'),
+  order: integer('order').default(0),
+  isVisible: boolean('is_visible').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Settings table
 export const settings = pgTable('settings', {
   id: serial('id').primaryKey(),
@@ -133,6 +146,7 @@ export const servicesRelations = relations(services, ({ many }) => ({
   incidents: many(incidentServices),
   statusHistory: many(serviceStatusHistory),
   maintenances: many(maintenanceServices),
+  components: many(components),
 }));
 
 export const incidentServicesRelations = relations(incidentServices, ({ one }) => ({
@@ -149,6 +163,13 @@ export const incidentServicesRelations = relations(incidentServices, ({ one }) =
 export const serviceStatusHistoryRelations = relations(serviceStatusHistory, ({ one }) => ({
   service: one(services, {
     fields: [serviceStatusHistory.serviceId],
+    references: [services.id],
+  }),
+}));
+
+export const componentsRelations = relations(components, ({ one }) => ({
+  service: one(services, {
+    fields: [components.serviceId],
     references: [services.id],
   }),
 }));
@@ -207,3 +228,6 @@ export type NewMaintenanceService = typeof maintenanceServices.$inferInsert;
 
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
+
+export type Component = typeof components.$inferSelect;
+export type NewComponent = typeof components.$inferInsert;
