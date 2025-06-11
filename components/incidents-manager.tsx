@@ -21,6 +21,7 @@ const incidentSchema = z.object({
   description: z.string().optional(),
   impact: z.enum(['none', 'minor', 'major', 'critical']),
   serviceIds: z.array(z.number()),
+  componentIds: z.array(z.number()).optional(),
 });
 
 const updateSchema = z.object({
@@ -36,6 +37,17 @@ interface Service {
   id: number;
   name: string;
   status: string;
+  components?: Component[];
+}
+
+interface Component {
+  id: number;
+  serviceId: number;
+  name: string;
+  description: string | null;
+  status: string;
+  order: number;
+  isVisible: boolean;
 }
 
 interface IncidentUpdate {
@@ -82,6 +94,7 @@ export function IncidentsManager() {
       description: '',
       impact: 'minor',
       serviceIds: [],
+      componentIds: [],
     },
   });
 
@@ -101,6 +114,7 @@ export function IncidentsManager() {
   });
 
   const selectedServiceIds = watchIncident('serviceIds') || [];
+  const selectedComponentIds = watchIncident('componentIds') || [];
 
   useEffect(() => {
     fetchData();
@@ -184,13 +198,21 @@ export function IncidentsManager() {
     setUpdateValue('status', incident.status);
     setUpdateDialogOpen(true);
   };
-
   const handleServiceToggle = (serviceId: number, checked: boolean) => {
     const currentIds = selectedServiceIds;
     if (checked) {
       setIncidentValue('serviceIds', [...currentIds, serviceId]);
     } else {
       setIncidentValue('serviceIds', currentIds.filter(id => id !== serviceId));
+    }
+  };
+
+  const handleComponentToggle = (componentId: number, checked: boolean) => {
+    const currentIds = selectedComponentIds;
+    if (checked) {
+      setIncidentValue('componentIds', [...currentIds, componentId]);
+    } else {
+      setIncidentValue('componentIds', currentIds.filter(id => id !== componentId));
     }
   };
 
@@ -247,21 +269,38 @@ export function IncidentsManager() {
                     <SelectItem value="critical">Critical Impact</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div>
+              </div>              <div>
                 <label className="text-sm font-medium">Affected Services</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
                   {services.map((service) => (
-                    <div key={service.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`service-${service.id}`}
-                        checked={selectedServiceIds.includes(service.id)}
-                        onCheckedChange={(checked) => handleServiceToggle(service.id, !!checked)}
-                      />
-                      <label htmlFor={`service-${service.id}`} className="text-sm">
-                        {service.name}
-                      </label>
+                    <div key={service.id} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`service-${service.id}`}
+                          checked={selectedServiceIds.includes(service.id)}
+                          onCheckedChange={(checked) => handleServiceToggle(service.id, !!checked)}
+                        />
+                        <label htmlFor={`service-${service.id}`} className="text-sm font-medium">
+                          {service.name}
+                        </label>
+                      </div>
+                      {/* Components for this service */}
+                      {service.components && service.components.length > 0 && (
+                        <div className="ml-6 space-y-1">
+                          {service.components.map((component) => (
+                            <div key={component.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`component-${component.id}`}
+                                checked={selectedComponentIds.includes(component.id)}
+                                onCheckedChange={(checked) => handleComponentToggle(component.id, !!checked)}
+                              />
+                              <label htmlFor={`component-${component.id}`} className="text-xs text-muted-foreground">
+                                {component.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

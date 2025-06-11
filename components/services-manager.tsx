@@ -47,6 +47,19 @@ interface Service {
   isVisible: boolean;
   createdAt: string;
   updatedAt: string;
+  components?: Component[];
+}
+
+interface Component {
+  id: number;
+  serviceId: number;
+  name: string;
+  description: string | null;
+  status: 'operational' | 'degraded' | 'partial_outage' | 'major_outage';
+  order: number;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Component {

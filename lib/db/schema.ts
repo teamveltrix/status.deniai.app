@@ -62,6 +62,15 @@ export const incidentServices = pgTable('incident_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Incident Components (many-to-many relationship)
+export const incidentComponents = pgTable('incident_components', {
+  id: serial('id').primaryKey(),
+  incidentId: integer('incident_id').notNull().references(() => incidents.id, { onDelete: 'cascade' }),
+  componentId: integer('component_id').notNull().references(() => components.id, { onDelete: 'cascade' }),
+  impact: incidentImpactEnum('impact').notNull().default('minor'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Service Status History
 export const serviceStatusHistory = pgTable('service_status_history', {
   id: serial('id').primaryKey(),
@@ -105,6 +114,15 @@ export const maintenanceServices = pgTable('maintenance_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Maintenance Components (many-to-many relationship)
+export const maintenanceComponents = pgTable('maintenance_components', {
+  id: serial('id').primaryKey(),
+  maintenanceId: integer('maintenance_id').notNull().references(() => scheduledMaintenance.id, { onDelete: 'cascade' }),
+  componentId: integer('component_id').notNull().references(() => components.id, { onDelete: 'cascade' }),
+  impact: incidentImpactEnum('impact').notNull().default('minor'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Components table
 export const components = pgTable('components', {
   id: serial('id').primaryKey(),
@@ -133,6 +151,7 @@ export const settings = pgTable('settings', {
 export const incidentsRelations = relations(incidents, ({ many }) => ({
   updates: many(incidentUpdates),
   services: many(incidentServices),
+  components: many(incidentComponents),
 }));
 
 export const incidentUpdatesRelations = relations(incidentUpdates, ({ one }) => ({
@@ -167,17 +186,20 @@ export const serviceStatusHistoryRelations = relations(serviceStatusHistory, ({ 
   }),
 }));
 
-export const componentsRelations = relations(components, ({ one }) => ({
+export const componentsRelations = relations(components, ({ one, many }) => ({
   service: one(services, {
     fields: [components.serviceId],
     references: [services.id],
   }),
+  incidents: many(incidentComponents),
+  maintenances: many(maintenanceComponents),
 }));
 
 // Maintenance Relations
 export const scheduledMaintenanceRelations = relations(scheduledMaintenance, ({ many }) => ({
   updates: many(maintenanceUpdates),
   services: many(maintenanceServices),
+  components: many(maintenanceComponents),
 }));
 
 export const maintenanceUpdatesRelations = relations(maintenanceUpdates, ({ one }) => ({
@@ -195,6 +217,28 @@ export const maintenanceServicesRelations = relations(maintenanceServices, ({ on
   service: one(services, {
     fields: [maintenanceServices.serviceId],
     references: [services.id],
+  }),
+}));
+
+export const incidentComponentsRelations = relations(incidentComponents, ({ one }) => ({
+  incident: one(incidents, {
+    fields: [incidentComponents.incidentId],
+    references: [incidents.id],
+  }),
+  component: one(components, {
+    fields: [incidentComponents.componentId],
+    references: [components.id],
+  }),
+}));
+
+export const maintenanceComponentsRelations = relations(maintenanceComponents, ({ one }) => ({
+  maintenance: one(scheduledMaintenance, {
+    fields: [maintenanceComponents.maintenanceId],
+    references: [scheduledMaintenance.id],
+  }),
+  component: one(components, {
+    fields: [maintenanceComponents.componentId],
+    references: [components.id],
   }),
 }));
 
@@ -231,3 +275,9 @@ export type NewSetting = typeof settings.$inferInsert;
 
 export type Component = typeof components.$inferSelect;
 export type NewComponent = typeof components.$inferInsert;
+
+export type IncidentComponent = typeof incidentComponents.$inferSelect;
+export type NewIncidentComponent = typeof incidentComponents.$inferInsert;
+
+export type MaintenanceComponent = typeof maintenanceComponents.$inferSelect;
+export type NewMaintenanceComponent = typeof maintenanceComponents.$inferInsert;

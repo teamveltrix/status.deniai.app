@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDb, incidents, incidentServices, incidentUpdates, services, type NewIncident, type NewIncidentService } from '@/lib/db';
+import { createDb, incidents, incidentServices, incidentComponents, incidentUpdates, services, components, type NewIncident, type NewIncidentService, type NewIncidentComponent } from '@/lib/db';
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { verifyAuth } from '@/lib/auth-middleware';
@@ -9,6 +9,7 @@ const incidentSchema = z.object({
   description: z.string().optional(),
   impact: z.enum(['none', 'minor', 'major', 'critical']).default('minor'),
   serviceIds: z.array(z.number()).optional(),
+  componentIds: z.array(z.number()).optional(),
 });
 
 export async function GET() {
@@ -87,9 +88,7 @@ export async function POST(request: NextRequest) {
     };
     
     const result = await db.insert(incidents).values(newIncident).returning();
-    const createdIncident = result[0];
-
-    // Add services to incident if provided
+    const createdIncident = result[0];    // Add services to incident if provided
     if (validatedData.serviceIds && validatedData.serviceIds.length > 0) {
       const incidentServiceData: NewIncidentService[] = validatedData.serviceIds.map(serviceId => ({
         incidentId: createdIncident.id,
@@ -98,6 +97,17 @@ export async function POST(request: NextRequest) {
       }));
 
       await db.insert(incidentServices).values(incidentServiceData);
+    }
+
+    // Add components to incident if provided
+    if (validatedData.componentIds && validatedData.componentIds.length > 0) {
+      const incidentComponentData: NewIncidentComponent[] = validatedData.componentIds.map(componentId => ({
+        incidentId: createdIncident.id,
+        componentId,
+        impact: validatedData.impact,
+      }));
+
+      await db.insert(incidentComponents).values(incidentComponentData);
     }
 
     // Create initial update

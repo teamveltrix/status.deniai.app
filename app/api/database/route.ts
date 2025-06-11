@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDb, services, incidents, incidentUpdates, scheduledMaintenance, maintenanceUpdates, settings, components } from '@/lib/db';
+import { createDb, services, incidents, incidentUpdates, scheduledMaintenance, maintenanceUpdates, settings, components, incidentComponents, maintenanceComponents } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 const db = createDb();
